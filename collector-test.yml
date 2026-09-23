@@ -1,0 +1,15 @@
+# What the test server needs besides the core; read by the core's testkit (CollectorTestConfig).
+# The first jar of a list is the target plugin: its version is checked against compatibility.yml.
+# Paper and Purpur ship spark: nothing to install there. Elsewhere, the spark plugin itself.
+collectors: [spark]
+runtime: java21
+plugins:
+  bukkit:
+    - url: https://ci.lucko.me/job/spark/539/artifact/spark-bukkit/build/libs/spark-1.10.187-bukkit.jar
+      sha512: b1fd1b4678c066dfa821fc69fa1e681d8f0cecc2dbff0b244dccd9f1a8167af46ac17d20d3d7400aae88a0a7cd5ac5be22b6a6e8f2a94106bdbd81bf80ad9f42
+  velocity:
+    - url: https://ci.lucko.me/job/spark/539/artifact/spark-velocity/build/libs/spark-1.10.187-velocity.jar
+      sha512: 88bfa9eacc673838cbee29ef0ffd19aae2613342276e0da3d02e4f1c94ab22d2acbd2055f7eeb097781a11fa0353c68ba17d664db75d74c747c680221b70e718
+per-platform:
+  paper: { plugins: [] }
+  purpur: { plugins: [] }
