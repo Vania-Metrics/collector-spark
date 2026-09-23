@@ -16,3 +16,4 @@ authors: [mc-vania]
 description: "Spark metrics: tick duration, CPU, garbage collection."
 depend: [VaniaMetrics]
 softdepend: [spark]
+folia-supported: true

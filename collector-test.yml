@@ -1,6 +1,7 @@
 # What the test server needs besides the core; read by the core's testkit (CollectorTestConfig).
 # The first jar of a list is the target plugin: its version is checked against compatibility.yml.
-# Paper and Purpur ship spark: nothing to install there. Elsewhere, the spark plugin itself.
+# Paper, Purpur and Folia ship spark (Folia with it off by default): nothing to install there.
+# Elsewhere, the spark plugin itself.
 collectors: [spark]
 runtime: java21
 plugins:
@@ -13,3 +14,4 @@ plugins:
 per-platform:
   paper: { plugins: [] }
   purpur: { plugins: [] }
+  folia: { plugins: [] }

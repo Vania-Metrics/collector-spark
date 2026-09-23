@@ -15,7 +15,7 @@ platforms:
   paper: { plugin: bundled, collector: yes }
   spigot: { plugin: yes, collector: yes }
   bukkit: { plugin: yes, collector: yes }
-  folia: { plugin: unknown, collector: no }
+  folia: { plugin: bundled, collector: yes }
   purpur: { plugin: bundled, collector: yes }
   sponge: { plugin: unknown, collector: no }
   bungeecord: { plugin: yes, collector: no }
