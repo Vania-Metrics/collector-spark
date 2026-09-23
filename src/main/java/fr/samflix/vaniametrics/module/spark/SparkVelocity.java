@@ -14,20 +14,20 @@ import fr.samflix.vaniametrics.api.VaniaMetricsProvider;
 import fr.samflix.vaniametrics.api.Version;
 
 /**
- * Le module spark, côté Velocity — le même collecteur, un autre point d'entrée.
+ * The spark module, Velocity side — the same collector, a different entry point.
  *
- * <p>Ici spark EST un plugin : Velocity ne le livre pas, il faut l'installer. La dépendance est
- * donc déclarée dans velocity-plugin.json, et Velocity garantit l'ordre de chargement.
+ * <p>Here spark IS a plugin: Velocity doesn't ship it, it has to be installed. The dependency is
+ * therefore declared in velocity-plugin.json, and Velocity guarantees load order.
  *
- * <p>Les deux classes d'entrée cohabitent dans le MÊME jar. Bukkit lit {@code plugin.yml} et
- * charge {@link SparkPaper} ; Velocity lit {@code velocity-plugin.json} et charge celle-ci. Chacun
- * ignore l'autre, qui n'est jamais chargée — c'est ce qui permet un seul jar par intégration.
+ * <p>Both entry classes live in the same jar. Bukkit reads {@code plugin.yml} and loads
+ * {@link SparkPaper}; Velocity reads {@code velocity-plugin.json} and loads this one. Each ignores
+ * the other, which is never loaded — that's what allows a single jar per integration.
  */
 @Plugin(
 		id = "vaniametrics-spark",
 		name = "VaniaMetrics Spark",
-		version = Version.VALEUR,
-		description = "Métriques spark pour VaniaMetrics.",
+		version = Version.VALUE,
+		description = "Spark metrics for VaniaMetrics.",
 		authors = {"mc-vania"},
 		dependencies = {
 			@com.velocitypowered.api.plugin.Dependency(id = "vaniametrics"),
@@ -35,29 +35,29 @@ import fr.samflix.vaniametrics.api.Version;
 		})
 public final class SparkVelocity {
 
-	private final Logger journal;
-	private Collector collecteur;
+	private final Logger logger;
+	private Collector collector;
 
 	@Inject
-	public SparkVelocity(Logger journal) {
-		this.journal = journal;
+	public SparkVelocity(Logger logger) {
+		this.logger = logger;
 	}
 
 	@Subscribe
 	public void onInit(ProxyInitializeEvent e) {
-		if (!SparkApi.presente()) {
-			journal.warn("spark introuvable — module inactif.");
+		if (!SparkApi.isPresent()) {
+			logger.warn("spark not found — module inactive.");
 			return;
 		}
-		VaniaMetrics metriques = VaniaMetricsProvider.get();
-		collecteur = new SparkCollector(metriques.plateforme());
-		metriques.enregistrer(collecteur);
+		VaniaMetrics metrics = VaniaMetricsProvider.get();
+		collector = new SparkCollector(metrics.platform());
+		metrics.register(collector);
 	}
 
 	@Subscribe
 	public void onShutdown(ProxyShutdownEvent e) {
-		if (collecteur != null) {
-			VaniaMetricsProvider.chercher().ifPresent(m -> m.retirer(collecteur));
+		if (collector != null) {
+			VaniaMetricsProvider.find().ifPresent(m -> m.unregister(collector));
 		}
 	}
 }

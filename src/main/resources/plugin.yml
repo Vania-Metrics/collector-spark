@@ -1,13 +1,13 @@
-# spark — et une exception qui mérite son commentaire.
+# spark — and an exception worth the comment.
 #
-# « depend: [spark] » SERAIT UNE ERREUR ICI. Depuis la 1.21, Paper INTÈGRE spark au
-# serveur au lieu de le charger comme plugin : il ne figure dans aucune liste — et
-# Bukkit refuserait donc de charger ce jar précisément là où spark est présent
-# d'office. La classe d'entrée vérifie la présence de l'API à la place.
+# "depend: [spark]" would be a mistake here. Since 1.21, Paper embeds spark in
+# the server instead of loading it as a plugin: it doesn't show up in any
+# list, so Bukkit would refuse to load this jar precisely where spark is
+# present by default. The entry class checks for the API's presence instead.
 name: VaniaMetrics-Spark
 version: ${version}
 main: fr.samflix.vaniametrics.module.spark.SparkPaper
 api-version: '1.21'
 authors: [mc-vania]
-description: "Métriques spark : durées de tick, processeur, ramasse-miettes."
+description: "Spark metrics: tick duration, CPU, garbage collection."
 depend: [VaniaMetrics]

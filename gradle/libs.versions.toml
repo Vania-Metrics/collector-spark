@@ -1,24 +1,25 @@
-# Dépendances de COMPILATION seulement — aucun jar tiers n'est embarqué dans le
-# jar produit. L'API VaniaMetrics n'est pas ici : elle vient du dépôt git core
-# (voir gradle.properties et settings.gradle.kts).
+# Compile-time dependencies only — no third-party jar is bundled in the
+# produced jar. The VaniaMetrics API is not here: it comes from the core git
+# repo (see gradle.properties and settings.gradle.kts).
 #
-# Les plugins tiers viennent du dépôt Maven de Modrinth, à l'id de version exact :
-# c'est le même fichier, octet pour octet, que le lien de téléchargement.
+# Third-party plugins come from Modrinth's Maven repo, at the exact version
+# id: it's the same file, byte for byte, as the download link.
 #
-# Les empreintes SHA-256 de tout ce qui est résolu sont épinglées dans
-# gradle/verification-metadata.xml. Après une montée de version :
+# The SHA-256 fingerprints of everything resolved are pinned in
+# gradle/verification-metadata.xml. After a version bump:
 #   ./gradlew --write-verification-metadata sha256 build
 #
-# paper-api EST UN INSTANTANÉ DATÉ : Paper ne publie pas de version figée de son
-# API, l'horodatage est la version. Il est lu comme une version figée (voir
-# settings.gradle.kts), donc SANS ses dépendances transitives : le bundle « paper »
-# déclare celles dont la compilation a besoin, aux versions du .pom de paper-api.
-# SPARK EST COMPILÉ CONTRE LA VERSION DE PAPER, la plus ANCIENNE des deux qui
-# tournent ici — celle que Paper embarque date de 2024, celle du proxy de 2026.
-# Compiler contre la récente ferait un jar qui échoue sur le lobby avec un
-# NoClassDefFoundError, ce qui est exactement arrivé. Les deux méthodes que seule
-# la récente possède sont appelées par réflexion, et publiées seulement là où
-# elles existent. spark-api est un instantané daté : l'horodatage est la version.
+# paper-api is a dated snapshot: Paper doesn't publish a pinned version of its
+# API, the timestamp is the version. It's read as a pinned version (see
+# settings.gradle.kts), so without its transitive dependencies: the "paper"
+# bundle declares the ones compilation needs, at the versions from paper-api's
+# .pom. spark is compiled against the older of the two Paper versions running
+# on this network — the one Paper embeds dates from 2024, the proxy's from
+# 2026. Compiling against the newer one would produce a jar that fails on the
+# lobby with a NoClassDefFoundError, which is exactly what happened. The two
+# methods only the newer API has are called via reflection, and published
+# only where they exist. spark-api is also a dated snapshot: the timestamp is
+# the version.
 [versions]
 paper-api = "1.21.11-R0.1-20260511.115010-91"
 adventure = "4.26.1"

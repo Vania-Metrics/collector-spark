@@ -7,36 +7,36 @@ import fr.samflix.vaniametrics.api.VaniaMetrics;
 import fr.samflix.vaniametrics.api.VaniaMetricsProvider;
 
 /**
- * Le module spark, côté Paper.
+ * The spark module, Paper side.
  *
- * <p>SPARK NE SE DÉCLARE PAS EN {@code depend} DANS LE plugin.yml, et c'est la particularité de ce
- * module : depuis la 1.21, Paper INTÈGRE spark au serveur au lieu de le charger comme plugin. Il
- * ne figure dans aucune liste — {@code /plugins} ne le montre pas — alors que ses commandes
- * répondent et que son API est chargée. Un {@code depend: [spark]} empêcherait donc ce module de
- * démarrer précisément là où spark est présent d'office.
+ * <p>Spark is deliberately NOT declared in {@code depend} in plugin.yml: since 1.21, Paper embeds
+ * spark in the server instead of loading it as a plugin. It doesn't appear in any list —
+ * {@code /plugins} won't show it — even though its commands respond and its API is loaded. A
+ * {@code depend: [spark]} would keep this module from starting precisely where spark is present
+ * by default.
  *
- * <p>On vérifie à la place que l'API est CHARGEABLE — voir {@link SparkApi}, qui porte ce test
- * précisément pour qu'il soit appelable des deux côtés sans traîner Bukkit avec lui.
+ * <p>Instead we check that the API is loadable — see {@link SparkApi}, which carries that check
+ * specifically so it can be called from either side without dragging Bukkit along.
  */
 public final class SparkPaper extends JavaPlugin {
 
-	private Collector collecteur;
+	private Collector collector;
 
 	@Override
 	public void onEnable() {
-		if (!SparkApi.presente()) {
-			getLogger().warning("spark introuvable sur ce serveur — module inactif.");
+		if (!SparkApi.isPresent()) {
+			getLogger().warning("spark not found on this server — module inactive.");
 			return;
 		}
-		VaniaMetrics metriques = VaniaMetricsProvider.get();
-		collecteur = new SparkCollector(metriques.plateforme());
-		metriques.enregistrer(collecteur);
+		VaniaMetrics metrics = VaniaMetricsProvider.get();
+		collector = new SparkCollector(metrics.platform());
+		metrics.register(collector);
 	}
 
 	@Override
 	public void onDisable() {
-		if (collecteur != null) {
-			VaniaMetricsProvider.chercher().ifPresent(m -> m.retirer(collecteur));
+		if (collector != null) {
+			VaniaMetricsProvider.find().ifPresent(m -> m.unregister(collector));
 		}
 	}
 }

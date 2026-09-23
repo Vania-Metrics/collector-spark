@@ -17,217 +17,215 @@ import fr.samflix.vaniametrics.api.MetricRegistry;
 import fr.samflix.vaniametrics.api.Platform;
 
 /**
- * Le relevé spark.
+ * The spark poll.
  *
- * <p>AU SCRAPE ET NON EN FOND : tout ce que spark expose est déjà calculé et mis en cache par lui,
- * {@code poll()} ne fait que lire un champ. C'est le collecteur le moins cher du plugin.
+ * <p>Scrape mode, not background: everything spark exposes is already computed and cached by it,
+ * {@code poll()} just reads a field. This is the cheapest collector in the plugin.
  *
- * <p>DEUX VERSIONS DE L'API COEXISTENT SUR CE RÉSEAU, et c'est ce qui commande toute l'écriture de
- * cette classe :
+ * <p>Two versions of the API coexist on this network, and that drives how this class is written:
  *
  * <ul>
- *   <li>le <b>lobby</b> porte celle que Paper embarque, {@code 0.1-20240720} — {@code tps},
- *       {@code mspt}, {@code cpuProcess}, {@code cpuSystem}, {@code gc}, et rien d'autre ;
- *   <li>le <b>proxy</b> porte celle de spark 1.10.187, qui ajoute {@code memoryAllocation()} et
+ *   <li>the <b>lobby</b> carries the one Paper embeds, {@code 0.1-20240720} — {@code tps},
+ *       {@code mspt}, {@code cpuProcess}, {@code cpuSystem}, {@code gc}, and nothing else;
+ *   <li>the <b>proxy</b> carries spark 1.10.187's, which adds {@code memoryAllocation()} and
  *       {@code playerPing()}.
  * </ul>
  *
- * <p>D'où deux règles. <b>Les fenêtres se découvrent par {@code getWindows()}</b> au lieu d'être
- * nommées : {@code StatisticWindow.MemoryAllocation} n'existe pas côté Paper, et la seule mention
- * de cette classe suffisait à faire échouer le module avec un {@code NoClassDefFoundError} —
- * constaté. Et <b>les deux méthodes récentes passent par la réflexion</b>, ce qui est ici le
- * choix honnête plutôt qu'un contournement : la solution propre serait de compiler deux modules,
- * un par version d'API, pour deux métriques.
+ * <p>Hence two rules. <b>Windows are discovered via {@code getWindows()}</b> instead of being
+ * named: {@code StatisticWindow.MemoryAllocation} doesn't exist on the Paper side, and merely
+ * referencing that class was enough to make the module fail with a {@code NoClassDefFoundError} —
+ * observed. And <b>the two recent methods go through reflection</b>, which here is the honest
+ * choice rather than a workaround: the clean solution would be to compile two modules, one per API
+ * version, for two metrics.
  */
 public final class SparkCollector implements Collector {
 
-	private final Platform plateforme;
+	private final Platform platform;
 
-	/** Absentes sur la version de Paper. Résolues une fois, à la déclaration. */
-	private final Method methodeAllocation;
-	private final Method methodePing;
+	/** Absent on the Paper version of the API. Resolved once, at declare time. */
+	private final Method allocationMethod;
+	private final Method pingMethod;
 
 	private Gauge tps;
 	private Gauge tick;
 	private Gauge cpu;
 	private Gauge allocation;
-	private Gauge gcTempsMoyen;
-	private Gauge gcFrequence;
-	private Gauge pingJoueurs;
+	private Gauge gcAverageTime;
+	private Gauge gcFrequency;
+	private Gauge playerPing;
 
-	public SparkCollector(Platform plateforme) {
-		this.plateforme = plateforme;
-		this.methodeAllocation = methode("memoryAllocation");
-		this.methodePing = methode("playerPing");
+	public SparkCollector(Platform platform) {
+		this.platform = platform;
+		this.allocationMethod = method("memoryAllocation");
+		this.pingMethod = method("playerPing");
 	}
 
-	private static Method methode(String nom) {
+	private static Method method(String name) {
 		try {
-			return Spark.class.getMethod(nom);
+			return Spark.class.getMethod(name);
 		} catch (NoSuchMethodException e) {
 			return null;
 		}
 	}
 
 	@Override
-	public String nom() {
+	public String name() {
 		return "spark";
 	}
 
 	@Override
-	public String origine() {
+	public String source() {
 		return "spark";
 	}
 
 	@Override
-	public void declarer(MetricRegistry r) {
-		tps = r.gauge("spark_tps", "TPS vu par spark. window = 5s|10s|1m|5m|15m.", "window");
+	public void declare(MetricRegistry r) {
+		tps = r.gauge("spark_tps", "TPS as seen by spark. window = 5s|10s|1m|5m|15m.", "window");
 		tick = r.gauge("spark_tick_duration_seconds",
-				"Durée de tick vue par spark. quantile = min|mean|median|p95|max. Jauges figées "
-						+ "sur les fenêtres de spark : pour un vrai histogramme, voir "
+				"Tick duration as seen by spark. quantile = min|mean|median|p95|max. Gauges "
+						+ "frozen on spark's windows: for a real histogram, see "
 						+ "mc_tick_duration_seconds.",
 				"window", "quantile");
 		cpu = r.gauge("spark_cpu_ratio",
-				"Charge processeur, de 0 à 1. source = process|system.", "source", "window");
-		gcTempsMoyen = r.gauge("spark_gc_average_seconds",
-				"Durée moyenne d'une collecte, par ramasse-miettes.", "gc");
-		gcFrequence = r.gauge("spark_gc_average_frequency_seconds",
-				"Temps moyen entre deux collectes. Court = le tas se remplit vite.", "gc");
+				"CPU load, from 0 to 1. source = process|system.", "source", "window");
+		gcAverageTime = r.gauge("spark_gc_average_seconds",
+				"Average duration of a collection, per garbage collector.", "gc");
+		gcFrequency = r.gauge("spark_gc_average_frequency_seconds",
+				"Average time between two collections. Short = the heap fills up fast.", "gc");
 
-		if (methodeAllocation != null) {
+		if (allocationMethod != null) {
 			allocation = r.gauge("spark_allocation_bytes_per_second",
-					"Taux d'allocation mémoire. Ce n'est pas la mémoire OCCUPÉE qui fait les "
-							+ "à-coups, c'est la vitesse à laquelle on en demande : chaque "
-							+ "gigaoctet alloué finit en collecte, donc en micro-pause.",
+					"Memory allocation rate. It's not the memory that's OCCUPIED that causes "
+							+ "stutters, it's the rate at which it's requested: every gigabyte "
+							+ "allocated ends up collected, hence a micro-pause.",
 					"window", "quantile");
 		}
-		if (methodePing != null) {
-			pingJoueurs = r.gauge("spark_player_ping_seconds",
-					"Ping des joueurs agrégé par spark. quantile = min|mean|median|p95|max.",
+		if (pingMethod != null) {
+			playerPing = r.gauge("spark_player_ping_seconds",
+					"Player ping aggregated by spark. quantile = min|mean|median|p95|max.",
 					"window", "quantile");
 		}
-		if (methodeAllocation == null || methodePing == null) {
-			plateforme.info("collecteur spark — API ancienne : taux d'allocation et ping agrégé "
-					+ "indisponibles, le reste est publié");
+		if (allocationMethod == null || pingMethod == null) {
+			platform.info("spark collector — old API: allocation rate and aggregated ping "
+					+ "unavailable, the rest is published");
 		}
 	}
 
 	@Override
-	public void relever(MetricRegistry r) {
+	public void collect(MetricRegistry r) {
 		Spark spark = spark();
 		if (spark == null) {
 			return;
 		}
 
-		DoubleStatistic<StatisticWindow.TicksPerSecond> statTps = spark.tps();
-		if (statTps != null) {
-			for (StatisticWindow.TicksPerSecond f : statTps.getWindows()) {
-				tps.set(statTps.poll(f), etiquette(f));
+		DoubleStatistic<StatisticWindow.TicksPerSecond> tpsStat = spark.tps();
+		if (tpsStat != null) {
+			for (StatisticWindow.TicksPerSecond w : tpsStat.getWindows()) {
+				tps.set(tpsStat.poll(w), label(w));
 			}
 		}
 
 		GenericStatistic<DoubleAverageInfo, StatisticWindow.MillisPerTick> mspt = spark.mspt();
 		if (mspt != null) {
-			for (StatisticWindow.MillisPerTick f : mspt.getWindows()) {
-				// spark rend des MILLISECONDES ; Prometheus veut des unités de base. Publier des
-				// millisecondes ferait des graphiques justes et des alertes fausses, puisque
-				// tout le reste du plugin est en secondes.
-				quantiles(tick, mspt.poll(f), 1e-3, etiquette(f));
+			for (StatisticWindow.MillisPerTick w : mspt.getWindows()) {
+				// spark returns MILLISECONDS; Prometheus wants base units. Publishing
+				// milliseconds would make graphs correct and alerts wrong, since the rest of
+				// the plugin is in seconds.
+				quantiles(tick, mspt.poll(w), 1e-3, label(w));
 			}
 		}
 
-		cpuVers(spark.cpuProcess(), "process");
-		cpuVers(spark.cpuSystem(), "system");
+		cpuInto(spark.cpuProcess(), "process");
+		cpuInto(spark.cpuSystem(), "system");
 
 		Map<String, GarbageCollector> gc = spark.gc();
 		if (gc != null) {
-			gc.forEach((nom, g) -> {
-				gcTempsMoyen.set(g.avgTime() / 1000.0, nom);
-				gcFrequence.set(g.avgFrequency() / 1000.0, nom);
+			gc.forEach((name, g) -> {
+				gcAverageTime.set(g.avgTime() / 1000.0, name);
+				gcFrequency.set(g.avgFrequency() / 1000.0, name);
 			});
 		}
 
-		reflechi(spark, methodeAllocation, allocation, 1.0);
-		reflechi(spark, methodePing, pingJoueurs, 1e-3);
+		reflective(spark, allocationMethod, allocation, 1.0);
+		reflective(spark, pingMethod, playerPing, 1e-3);
 	}
 
-	private void cpuVers(DoubleStatistic<StatisticWindow.CpuUsage> stat, String source) {
+	private void cpuInto(DoubleStatistic<StatisticWindow.CpuUsage> stat, String source) {
 		if (stat == null) {
 			return;
 		}
-		for (StatisticWindow.CpuUsage f : stat.getWindows()) {
-			cpu.set(stat.poll(f), source, etiquette(f));
+		for (StatisticWindow.CpuUsage w : stat.getWindows()) {
+			cpu.set(stat.poll(w), source, label(w));
 		}
 	}
 
 	/**
-	 * Relève une statistique que seule l'API récente possède.
+	 * Polls a statistic that only the recent API has.
 	 *
-	 * <p>Seul l'APPEL est réfléchi : le type rendu, {@code GenericStatistic}, existe dans les deux
-	 * versions, donc tout ce qui suit est du code normal et vérifié à la compilation.
+	 * <p>Only the CALL is reflective: the returned type, {@code GenericStatistic}, exists in both
+	 * versions, so everything after that is normal, compile-checked code.
 	 */
 	@SuppressWarnings("unchecked")
-	private void reflechi(Spark spark, Method methode, Gauge cible, double facteur) {
-		if (methode == null || cible == null) {
+	private void reflective(Spark spark, Method method, Gauge target, double factor) {
+		if (method == null || target == null) {
 			return;
 		}
 		try {
-			Object brut = methode.invoke(spark);
-			if (!(brut instanceof GenericStatistic)) {
+			Object raw = method.invoke(spark);
+			if (!(raw instanceof GenericStatistic)) {
 				return;
 			}
 			GenericStatistic<DoubleAverageInfo, ?> stat =
-					(GenericStatistic<DoubleAverageInfo, ?>) brut;
-			for (Enum<?> f : stat.getWindows()) {
-				quantiles(cible, pollBrut(stat, f), facteur, etiquette((StatisticWindow) f));
+					(GenericStatistic<DoubleAverageInfo, ?>) raw;
+			for (Enum<?> w : stat.getWindows()) {
+				quantiles(target, pollRaw(stat, w), factor, label((StatisticWindow) w));
 			}
 		} catch (ReflectiveOperationException | ClassCastException e) {
-			plateforme.avertir("spark : " + methode.getName() + " illisible — " + e);
+			platform.warn("spark: " + method.getName() + " unreadable — " + e);
 		}
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private static DoubleAverageInfo pollBrut(GenericStatistic stat, Enum<?> fenetre) {
-		return (DoubleAverageInfo) stat.poll(fenetre);
+	private static DoubleAverageInfo pollRaw(GenericStatistic stat, Enum<?> window) {
+		return (DoubleAverageInfo) stat.poll(window);
 	}
 
-	private void quantiles(Gauge g, DoubleAverageInfo info, double facteur, String fenetre) {
+	private void quantiles(Gauge g, DoubleAverageInfo info, double factor, String window) {
 		if (info == null) {
 			return;
 		}
-		g.set(facteur * info.min(), fenetre, "min");
-		g.set(facteur * info.mean(), fenetre, "mean");
-		g.set(facteur * info.median(), fenetre, "median");
-		g.set(facteur * info.percentile95th(), fenetre, "p95");
-		g.set(facteur * info.max(), fenetre, "max");
+		g.set(factor * info.min(), window, "min");
+		g.set(factor * info.mean(), window, "mean");
+		g.set(factor * info.median(), window, "median");
+		g.set(factor * info.percentile95th(), window, "p95");
+		g.set(factor * info.max(), window, "max");
 	}
 
 	/**
-	 * L'instance de spark, par les deux voies, et RÉSOLUE À CHAQUE RELEVÉ.
+	 * The spark instance, by either path, RESOLVED ON EVERY POLL.
 	 *
-	 * <p>Pas de mise en cache : l'ordre de démarrage n'est garanti sur aucune des deux
-	 * plateformes, et un spark rechargé à chaud rendrait une instance périmée. Le coût est une
-	 * recherche dans une table toutes les quinze secondes.
+	 * <p>No caching: start order is guaranteed on neither platform, and a hot-reloaded spark
+	 * would leave a stale instance cached. The cost is a table lookup every fifteen seconds.
 	 *
-	 * <p>Le {@code ServicesManager} d'abord, parce que c'est la voie de Paper, où spark est
-	 * intégré au serveur et ne renseigne PAS {@code SparkProvider} — constaté.
+	 * <p>{@code ServicesManager} first, because that's Paper's path, where spark is embedded in
+	 * the server and does NOT populate {@code SparkProvider} — observed.
 	 */
 	private Spark spark() {
-		java.util.Optional<Spark> service = plateforme.service(Spark.class);
+		java.util.Optional<Spark> service = platform.service(Spark.class);
 		if (service.isPresent()) {
 			return service.get();
 		}
 		try {
 			return SparkProvider.get();
 		} catch (Throwable t) {
-			// IllegalStateException quand spark est là mais pas encore prêt : état transitoire
-			// du démarrage, pas une erreur. On ne publie rien ce tour-ci.
+			// IllegalStateException when spark is there but not ready yet: a transient
+			// startup state, not an error. Nothing is published this round.
 			return null;
 		}
 	}
 
-	/** « PT10S » ne se lit pas dans Grafana. « 10s » si. */
-	private static String etiquette(StatisticWindow f) {
+	/** "PT10S" doesn't read well in Grafana. "10s" does. */
+	private static String label(StatisticWindow f) {
 		long s = f.length().getSeconds();
 		return s >= 60 && s % 60 == 0 ? (s / 60) + "m" : s + "s";
 	}
