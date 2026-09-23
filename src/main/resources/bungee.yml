@@ -1,0 +1,8 @@
+# The BungeeCord and Waterfall entry point. BungeeCord reads this file before plugin.yml, which
+# is Bukkit's; Velocity reads velocity-plugin.json. One jar, three platforms.
+name: VaniaMetrics-Spark
+version: ${version}
+main: fr.samflix.vaniametrics.module.spark.SparkBungee
+author: mc-vania
+description: "Spark metrics: CPU, garbage collection, allocation, player ping."
+depends: [VaniaMetrics, spark]

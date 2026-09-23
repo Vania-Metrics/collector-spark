@@ -19,6 +19,7 @@ dependencies {
     compileOnly("fr.samflix:vania-metrics-api")
     compileOnly(libs.bundles.paper)
     compileOnly(libs.velocity.api)
+    compileOnly(libs.bungeecord.api)
     compileOnly(libs.spark.api)
     // @Plugin generates velocity-plugin.json: the annotation processor lives in velocity-api.
     annotationProcessor(libs.velocity.api)
@@ -34,7 +35,7 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.processResources {
     val v = version.toString()
     inputs.property("version", v)
-    filesMatching("plugin.yml") { filter { it.replace("\${version}", v) } }
+    filesMatching(listOf("plugin.yml", "bungee.yml")) { filter { it.replace("\${version}", v) } }
 }
 
 tasks.jar {

@@ -26,6 +26,7 @@ adventure = "4.26.1"
 velocity-api = "3.5.1"
 
 [libraries]
+bungeecord-api = { module = "net.md-5:bungeecord-api", version = "1.21-R0.3" }
 paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
 adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure" }
 adventure-key = { module = "net.kyori:adventure-key", version.ref = "adventure" }

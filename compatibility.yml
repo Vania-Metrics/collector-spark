@@ -18,7 +18,7 @@ platforms:
   folia: { plugin: bundled, collector: yes }
   purpur: { plugin: bundled, collector: yes }
   sponge: { plugin: unknown, collector: no }
-  bungeecord: { plugin: yes, collector: no }
+  bungeecord: { plugin: yes, collector: yes }
   geyser: { plugin: unknown, collector: no }
   velocity: { plugin: yes, collector: yes }
-  waterfall: { plugin: yes, collector: no }
+  waterfall: { plugin: yes, collector: yes }

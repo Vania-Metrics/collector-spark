@@ -18,5 +18,5 @@ To bump the version: change `vaniaCore.ref` (a `vX.Y.Z` tag).
 ## Dependencies
 
 - `gradle.properties` — the core's repo and ref, where the API comes from.
-- `gradle/libs.versions.toml` — paper-api, velocity-api, and the targeted plugins (Modrinth's Maven repo), **compile-time only**.
+- `gradle/libs.versions.toml` — paper-api, velocity-api, bungeecord-api, and the targeted plugins (Modrinth's Maven repo), **compile-time only**.
 - `gradle/verification-metadata.xml` — SHA-256 fingerprints of everything resolved. After a version bump: `./gradlew --write-verification-metadata sha256 build`.

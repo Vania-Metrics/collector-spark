@@ -19,9 +19,10 @@ import fr.samflix.vaniametrics.api.Version;
  * <p>Here spark IS a plugin: Velocity doesn't ship it, it has to be installed. The dependency is
  * therefore declared in velocity-plugin.json, and Velocity guarantees load order.
  *
- * <p>Both entry classes live in the same jar. Bukkit reads {@code plugin.yml} and loads
- * {@link SparkPaper}; Velocity reads {@code velocity-plugin.json} and loads this one. Each ignores
- * the other, which is never loaded — that's what allows a single jar per integration.
+ * <p>All three entry classes live in the same jar. Bukkit reads {@code plugin.yml} and loads
+ * {@link SparkPaper}; BungeeCord reads {@code bungee.yml} and loads {@link SparkBungee}; Velocity
+ * reads {@code velocity-plugin.json} and loads this one. Each ignores the others, which are never
+ * loaded — that's what allows a single jar per integration.
  */
 @Plugin(
 		id = "vaniametrics-spark",
