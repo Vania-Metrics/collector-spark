@@ -1,0 +1,13 @@
+# spark — et une exception qui mérite son commentaire.
+#
+# « depend: [spark] » SERAIT UNE ERREUR ICI. Depuis la 1.21, Paper INTÈGRE spark au
+# serveur au lieu de le charger comme plugin : il ne figure dans aucune liste — et
+# Bukkit refuserait donc de charger ce jar précisément là où spark est présent
+# d'office. La classe d'entrée vérifie la présence de l'API à la place.
+name: VaniaMetrics-Spark
+version: ${version}
+main: fr.samflix.vaniametrics.module.spark.SparkPaper
+api-version: '1.21'
+authors: [mc-vania]
+description: "Métriques spark : durées de tick, processeur, ramasse-miettes."
+depend: [VaniaMetrics]
