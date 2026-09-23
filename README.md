@@ -1,11 +1,11 @@
-# colecteur-spark
+# collector-spark
 
 VaniaMetrics collector for spark. One module = one jar, loaded by the platform if and only if the core is present.
 
 ## Build
 
 ```sh
-./gradlew build                                # build/libs/VaniaMetrics-<Name>-<v>.jar
+./gradlew build                                # build/libs/vania-metrics-collector-spark-<v>.jar
 ./gradlew build -PvaniaCore.ref=main           # API from another core ref
 ./gradlew build -PvaniaCore.dir=../core        # API from a local core (API development)
 ./gradlew compileJava                          # compile only
