@@ -1,3 +1,5 @@
+<img src="icon.png" alt="" width="96" align="right">
+
 # collector-spark
 
 VaniaMetrics collector for spark. One module = one jar, loaded by the platform if and only if the core is present.
