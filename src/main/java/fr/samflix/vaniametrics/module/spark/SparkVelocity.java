@@ -11,7 +11,6 @@ import com.velocitypowered.api.plugin.Plugin;
 import fr.samflix.vaniametrics.api.Collector;
 import fr.samflix.vaniametrics.api.VaniaMetrics;
 import fr.samflix.vaniametrics.api.VaniaMetricsProvider;
-import fr.samflix.vaniametrics.api.Version;
 
 /**
  * The spark module, Velocity side — the same collector, a different entry point.
@@ -27,7 +26,7 @@ import fr.samflix.vaniametrics.api.Version;
 @Plugin(
 		id = "vaniametrics-spark",
 		name = "VaniaMetrics Spark",
-		version = Version.VALUE,
+		version = BuildVersion.VALUE,
 		description = "Spark metrics for VaniaMetrics.",
 		authors = {"mc-vania"},
 		dependencies = {

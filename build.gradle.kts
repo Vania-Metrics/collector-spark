@@ -12,6 +12,27 @@ plugins {
 val vaniaCoreDir = gradle.extra["vaniaCoreDir"] as File
 version = file("version.txt").readText().trim()
 
+// Velocity reads the version from @Plugin, which wants a compile-time constant: the build writes
+// one from version.txt, so the proxy shows this collector's version and not the core's.
+val generateBuildVersion by tasks.registering {
+    val v = version.toString()
+    val out = layout.buildDirectory.dir("generated/sources/buildVersion/java/main")
+    inputs.property("version", v)
+    outputs.dir(out)
+    doLast {
+        val file = out.get().file("fr/samflix/vaniametrics/module/spark/BuildVersion.java").asFile
+        file.parentFile.mkdirs()
+        file.writeText(
+            "package fr.samflix.vaniametrics.module.spark;\n\n" +
+                "/** This jar's version, written by the build from version.txt. */\n" +
+                "public final class BuildVersion {\n\n" +
+                "\tpublic static final String VALUE = \"$v\";\n\n" +
+                "\tprivate BuildVersion() {}\n" +
+                "}\n")
+    }
+}
+sourceSets.main { java.srcDir(generateBuildVersion) }
+
 dependencies {
     // Wired in by the composite build to the api/ project of the core repo.
     compileOnly("fr.samflix:vania-metrics-api")
